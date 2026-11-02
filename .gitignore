@@ -1,0 +1,14 @@
+# Local Python environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Local PyCharm settings
+.idea/
+
+# Secret environment files
+.env
+.env.*
+!.env.example
