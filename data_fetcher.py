@@ -1,0 +1,61 @@
+import os
+
+import requests
+
+API_URL = "https://api.api-ninjas.com/v1/animals"
+API_KEY = os.environ.get("ANIMALS_API_KEY")
+REQUEST_TIMEOUT = 30
+
+
+def fetch_data(animal_name):
+    """Fetch matching animals and return a list of dictionaries."""
+    if not API_KEY:
+        raise ValueError(
+            "Set ANIMALS_API_KEY in the PyCharm run configuration."
+        )
+
+    try:
+        response = requests.get(
+            API_URL,
+            headers={"X-Api-Key": API_KEY},
+            params={"name": animal_name},
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+
+    except requests.exceptions.HTTPError as error:
+        status_code = error.response.status_code
+
+        raise RuntimeError(
+            f"The API returned HTTP {status_code}."
+        ) from error
+
+    except requests.exceptions.Timeout as error:
+        raise RuntimeError(
+            "The API request timed out. Please try again."
+        ) from error
+
+    except requests.exceptions.ConnectionError as error:
+        raise RuntimeError(
+            "Could not connect to the API. "
+            "Check your internet connection."
+        ) from error
+
+    except requests.exceptions.RequestException as error:
+        raise RuntimeError(
+            "The API request failed for another reason."
+        ) from error
+
+    try:
+        animals_data = response.json()
+    except ValueError as error:
+        raise RuntimeError(
+            "The API response could not be read as JSON."
+        ) from error
+
+    if not isinstance(animals_data, list):
+        raise ValueError(
+            "The API returned an unexpected data format."
+        )
+
+    return animals_data

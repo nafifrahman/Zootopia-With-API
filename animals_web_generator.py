@@ -1,12 +1,6 @@
 import html
-import json
-import os
-import requests
 
-def load_data(file_path):
-    """Load a JSON file and return its contents."""
-    with open(file_path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
+import data_fetcher
 
 
 def read_template(file_path):
@@ -21,36 +15,8 @@ def write_html(file_path, content):
         handle.write(content)
 
 
-def get_available_skin_types(animals_data):
-    """Return a sorted list of unique skin types."""
-    skin_types = set()
-
-    for animal in animals_data:
-        characteristics = animal.get("characteristics", {})
-        skin_type = characteristics.get("skin_type")
-
-        if skin_type:
-            skin_types.add(skin_type)
-
-    return sorted(skin_types)
-
-
-def filter_by_skin_type(animals_data, selected_skin_type):
-    """Return animals that match the selected skin type."""
-    filtered_animals = []
-
-    for animal in animals_data:
-        characteristics = animal.get("characteristics", {})
-        skin_type = characteristics.get("skin_type")
-
-        if skin_type and skin_type.lower() == selected_skin_type.lower():
-            filtered_animals.append(animal)
-
-    return filtered_animals
-
-
 def serialize_animal(animal_obj):
-    """Convert one animal object into an HTML card."""
+    """Convert one animal dictionary into an HTML card."""
     name = html.escape(animal_obj.get("name", "Unknown"))
     characteristics = animal_obj.get("characteristics", {})
     locations = animal_obj.get("locations", [])
@@ -63,28 +29,28 @@ def serialize_animal(animal_obj):
     if "diet" in characteristics:
         diet = html.escape(characteristics["diet"])
         output += (
-            f'      <li class="animal-details__item">'
+            '      <li class="animal-details__item">'
             f"<strong>Diet:</strong> {diet}</li>\n"
         )
 
     if locations:
         first_location = html.escape(locations[0])
         output += (
-            f'      <li class="animal-details__item">'
+            '      <li class="animal-details__item">'
             f"<strong>Location:</strong> {first_location}</li>\n"
         )
 
     if "type" in characteristics:
         animal_type = html.escape(characteristics["type"])
         output += (
-            f'      <li class="animal-details__item">'
+            '      <li class="animal-details__item">'
             f"<strong>Type:</strong> {animal_type}</li>\n"
         )
 
     if "skin_type" in characteristics:
         skin_type = html.escape(characteristics["skin_type"])
         output += (
-            f'      <li class="animal-details__item">'
+            '      <li class="animal-details__item">'
             f"<strong>Skin type:</strong> {skin_type}</li>\n"
         )
 
@@ -96,7 +62,7 @@ def serialize_animal(animal_obj):
 
 
 def serialize_animals(animals_data):
-    """Convert all animal objects into one HTML string."""
+    """Convert a list of animals into HTML cards."""
     output = ""
 
     for animal in animals_data:
@@ -105,28 +71,8 @@ def serialize_animals(animals_data):
     return output
 
 
-def fetch_animals(animal_name):
-    """Fetch animals matching the given name from the API."""
-    api_key = os.environ.get("ANIMALS_API_KEY")
-
-    if not api_key:
-        raise ValueError(
-            "Set ANIMALS_API_KEY in the PyCharm run configuration."
-        )
-
-    response = requests.get(
-        "https://api.api-ninjas.com/v1/animals",
-        headers={"X-Api-Key": api_key},
-        params={"name": animal_name},
-        timeout=30,
-    )
-    response.raise_for_status()
-
-    return response.json()
-
-
 def main():
-    """Generate a website for an animal name entered by the user."""
+    """Generate a website using data from the data fetcher."""
     animal_name = input("Enter a name of an animal: ").strip()
 
     if not animal_name:
@@ -134,8 +80,8 @@ def main():
         return
 
     try:
-        animals_data = fetch_animals(animal_name)
-    except (requests.exceptions.RequestException, ValueError) as error:
+        animals_data = data_fetcher.fetch_data(animal_name)
+    except (RuntimeError, ValueError) as error:
         print(f"Could not fetch animal data: {error}")
         return
 
@@ -154,6 +100,7 @@ def main():
             "</p>\n"
             "</li>\n"
         )
+
     template = read_template("animals_template.html")
 
     final_html = template.replace(
