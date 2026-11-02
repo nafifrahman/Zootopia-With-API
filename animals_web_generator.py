@@ -126,9 +126,15 @@ def fetch_animals(animal_name):
 
 
 def main():
-    """Generate a website using API results for Fox."""
+    """Generate a website for an animal name entered by the user."""
+    animal_name = input("Enter a name of an animal: ").strip()
+
+    if not animal_name:
+        print("Please enter an animal name.")
+        return
+
     try:
-        animals_data = fetch_animals("Fox")
+        animals_data = fetch_animals(animal_name)
     except (requests.exceptions.RequestException, ValueError) as error:
         print(f"Could not fetch animal data: {error}")
         return
