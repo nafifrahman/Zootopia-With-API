@@ -1,6 +1,7 @@
 import html
 import json
-
+import os
+import requests
 
 def load_data(file_path):
     """Load a JSON file and return its contents."""
@@ -104,39 +105,48 @@ def serialize_animals(animals_data):
     return output
 
 
-def main():
-    """Generate animals.html based on selected skin type."""
-    animals_data = load_data("animals_data.json")
-    skin_types = get_available_skin_types(animals_data)
+def fetch_animals(animal_name):
+    """Fetch animals matching the given name from the API."""
+    api_key = os.environ.get("ANIMALS_API_KEY")
 
-    print("Available skin types:")
-    for skin_type in skin_types:
-        print(f"- {skin_type}")
-
-    selected_skin_type = input("Enter a skin type: ").strip()
-    filtered_animals = filter_by_skin_type(animals_data, selected_skin_type)
-
-    if filtered_animals:
-        animals_output = serialize_animals(filtered_animals)
-    else:
-        animals_output = (
-            '<li class="cards__item">'
-            '<div class="card__title">No animals found</div>'
-            '<div class="card__text">'
-            '<ul class="animal-details">'
-            '<li class="animal-details__item">'
-            'Try another skin type.'
-            "</li>"
-            "</ul>"
-            "</div>"
-            "</li>"
+    if not api_key:
+        raise ValueError(
+            "Set ANIMALS_API_KEY in the PyCharm run configuration."
         )
 
+    response = requests.get(
+        "https://api.api-ninjas.com/v1/animals",
+        headers={"X-Api-Key": api_key},
+        params={"name": animal_name},
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    return response.json()
+
+
+def main():
+    """Generate a website using API results for Fox."""
+    try:
+        animals_data = fetch_animals("Fox")
+    except (requests.exceptions.RequestException, ValueError) as error:
+        print(f"Could not fetch animal data: {error}")
+        return
+
+    animals_html = serialize_animals(animals_data)
     template = read_template("animals_template.html")
-    final_html = template.replace("__REPLACE_ANIMALS_INFO__", animals_output)
+
+    final_html = template.replace(
+        "__REPLACE_ANIMALS_INFO__",
+        animals_html,
+    )
+
     write_html("animals.html", final_html)
 
-    print("animals.html was created successfully.")
+    print(
+        "Website was successfully generated "
+        "to the file animals.html."
+    )
 
 
 if __name__ == "__main__":
