@@ -139,7 +139,21 @@ def main():
         print(f"Could not fetch animal data: {error}")
         return
 
-    animals_html = serialize_animals(animals_data)
+    if animals_data:
+        animals_html = serialize_animals(animals_data)
+    else:
+        safe_name = html.escape(animal_name)
+
+        animals_html = (
+            '<li class="cards__item">\n'
+            '  <h2 class="card__title">'
+            f'The animal "{safe_name}" doesn&#39;t exist.'
+            "</h2>\n"
+            '  <p class="card__text">'
+            "No matching animals were found. Try another name."
+            "</p>\n"
+            "</li>\n"
+        )
     template = read_template("animals_template.html")
 
     final_html = template.replace(
