@@ -1,9 +1,15 @@
 import os
+from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
+
+
+ENV_PATH = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=ENV_PATH)
 
 API_URL = "https://api.api-ninjas.com/v1/animals"
-API_KEY = os.environ.get("ANIMALS_API_KEY")
+API_KEY = os.getenv("API_KEY")
 REQUEST_TIMEOUT = 30
 
 
@@ -11,7 +17,7 @@ def fetch_data(animal_name):
     """Fetch matching animals and return a list of dictionaries."""
     if not API_KEY:
         raise ValueError(
-            "Set ANIMALS_API_KEY in the PyCharm run configuration."
+            "API_KEY is missing. Add it to the project's .env file."
         )
 
     try:
